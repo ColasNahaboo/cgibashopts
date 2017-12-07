@@ -1,0 +1,249 @@
+#!/bin/bash
+export TEWIBA=1.1
+USAGE='tewiba [options] [tests...]
+Tewiba: TEst WIth BAsh: a simple test suite, in the spirit of shell scripting
+Runs the test suite, on all tests in the current dir (default), 
+or on specific tests or directories of tests given as arguments.
+   * Tests are given as arguments, and executed in order, they can be either
+      * an executable file
+      * a directory, all executable files in it will be run as tests
+        Filenames beginning with a . # _ or ending with "~" are ignored
+        no recursion is done, subdirs will not be explicitely scanned
+        except the ones ending in .subtests wthat will be also run
+     If an executable file __INIT__ is found, it will be sourced into the shell
+     (read) so that its definitions will be available for all the tests in it
+     Same, if an __END__ file is found, it will be sourced after the tests
+   * Nothing is printed if all tests OK. On failure, the stderr is printed
+   * Tests exit code must be the number of failed tests (0 means OK)
+   * A warning is shown if the test was OK but printed on stderr
+   * Tests are run in their directory
+   * Tewiba exit code is the total number of failed tests. 
+
+How to write tests:
+   * Tests are executable files (in any language), that exit with code 0 if OK,
+     and the number of failures if not
+   * Test file names can be meaningful, e.g: "Test for empty input"
+   * Filenames beginning with a "." "#" "_" or ending with "~" are ignored
+     as well as files named "tewiba"
+   * They must print on stderr an explanation of the error, or a warning if 
+     exit code is 0. Prints on stdout are only shonw in verbose mode
+   * Tests can create temporary files and dirs prefixed by "$tmp."
+     they will be automatically cleaned afterwards by rm -rf $tmp $tmp.*
+   * Test data can be put in subdirectories, as subdirectories are not tested
+   * Convenience functions & variables that you can use in bash script tests:
+     TLEVEL chars  only runs if a level in chars is in the ones given by -l,
+                   or -l not specified. Each level is an alphanumeric char.
+     TLEVEL_ONLY chars    Same as above but does not run if -l not given 
+     TEST message  prints (sub)test name if verbose
+     TERR message  declares an error, but continues the tests
+     FERR message  fatal error: also aborts the current test file
+     TEND          terminates your test script (alias for: exit $TFAILS)
+                   the only function really mandatory.
+     TINIT id...   For each id (composed of letters, numbers, and _ - .)
+                   ensures that files __INIT__id and __END__id are sourced,
+                   if they exist, before and after all tests of the dir,
+                   after and before __INIT__ and __END__ respectively
+     $TV           is true in verbose mode, false otherwise
+     $tmp          temporary data prefix (see above)
+     $nl           is the newline character
+     $TEWIBA       the version number of tewiba. 
+                   Trick: put after #!/bin/bash the line:
+                   [ -n "$TEWIBA" ] || exec tewiba -v "$0"
+                   so that the test file can be executed standalone
+     $TEWIBADIR    the original directory where tewiba was run
+
+Options:
+   -v      verbose: prints each test name as it is run, as well as its stdout
+   -V      just prints tewiba version number
+   -x      debug: execute each test in set -x mode copying also the output to
+           /tmp/tewiba.$LOGNAME.out Note: does not imply -v
+   -l levels  runs only tests of the levels (characters) in the string levels
+           "TLEVEL x" in a test runs when given "-l y" if [y] matches x:
+           thus ranges are possible: -l 0-3 matches a TLEVEL 17a
+   -s      standalone: do not read __INIT__ nor __END__ files
+   -e file outputs the total number of errors in the file. 
+
+Exemple simple test file:
+  #!/bin/bash
+  [ -n "$TEWIBA" ] || exec tewiba -v "$0"
+  TEST screen installed
+  hash screen || TERR screen command not found
+  TEND
+
+Version '"$TEWIBA"' - Web site: http://colas.nahaboo.net/Software/Tewiba
+Copyright (c) 2013-2017 Colas Nahaboo (http://colas.nahaboo.net)
+MIT License: http://opensource.org/licenses/MIT
+'
+
+############################################ Options
+export debug=false
+export debuglog=/tmp/tewiba.$LOGNAME.out
+export statusfile=
+export ts_standalone=false
+export TEWIBADIR="$PWD"
+export TLEVELS=
+export TV=
+
+err () { echo "***ERROR: $*" >&2; exit 1; }
+warn () { echo "###Warning: $*" >&2; }
+V () { :;}; T () { :;}; TV=false; E () { echo "$@";}; En () { echo -n "$@";}
+Vn () { :;}
+while test "_${1#-}" != "_$1" -a "_${1//-/}" != "_";do case "$1" in
+  -v) V () { echo "== $*" >&2;}; Vn () { echo -n "== $*" >&2;}; TV=true
+      T () { local i;En "==";for i in $*;do En " $i="`eval E '$'$i`;done;E;};;
+  -x) debug=true; rm -f $debuglog;;
+  -e) statusfile="$2"; shift;;
+  -l) TLEVELS="$2"; shift;;
+  -s) ts_standalone=true;;
+  -V) echo "$TEWIBA"; exit 0;;
+  *) echo "$USAGE"; exit 1;
+esac;shift; done; if test "_$1" = "_--";then shift; fi
+
+############################################ Convenience funcs & vars
+export ts_failures=0
+export tmp=/tmp/tewiba.$$
+ttmp=/tmp/tewiba-main.$$
+export TINITS=$ttmp.tinits.
+export nl=$'\n' #'
+export TFAILS=0
+export TDIR=
+export TIDS=' '
+TLEVEL () { [ -z "$TLEVELS" ] || [[ $* =~ [$TLEVELS] ]] || exit 0; }
+TLEVEL_ONLY () { [[ $* =~ [$TLEVELS] ]] || exit 0; }
+TEST () { $TV && echo "== $*"; }
+TERR () { echo "***TEST ERROR ${0##*/}*** $*" >&2; let TFAILS++; }
+FERR () { echo "***FATAL ERROR ${0##*/}*** $*" >&2;let TFAILS++;exit $TFAILS; }
+TEND () { exit $TFAILS; }
+TINIT () { # TINITS is a per-dir file containing the loaded IDs
+  local id="${1//[^-_.a-zA-Z0-9/}"; [ -n "$id" ] || return; 
+  fgrep -qxs $id $TINITS && return; echo $id >>$TINITS
+  [ -x __INIT__$id ] && source __INIT__$id
+}
+TCLEANUP () { rm -rf $ttmp $ttmp.* $tmp $tmp.*; }; trap TCLEANUP 0
+
+export -f TLEVEL TEST TERR FERR TEND TINIT TCLEANUP
+
+############################################ Code
+
+# cautious cd
+err_cd () {
+  cd "$1" 2>/dev/null || \
+  err "tewiba failed to enter test dir: "$(readlink -m "$1")
+}
+
+# executes all the tests that are direct sons of a dir
+ts_dir () {
+  local i oldpwd="$PWD" id
+  err_cd "$1"
+  export TINITS=${TINITS}x
+  for i in *; do
+    if [ -d "$i" ]; then
+      [[ $i =~ [.]subtests$ ]] && ts_dir "$i"
+    else
+      [[ $i =~ (^[#._]|~$) ]] || [ ! -x "$i" ] || [ "$i" = tewiba ] && 
+      continue
+      ts_test "$i"
+    fi
+  done
+  if [ -s $TINITS ]; then 
+    for id in $(cat $TINITS); do [ -x __END__$id ] && source __END__$id; done
+  fi
+  cd "$oldpwd"
+}
+
+# go execute a test in its directory
+ts_test_path () {
+    local path=$(readlink -m "$1") oldpwd="$PWD"
+    err_cd "${path%/*}"
+    ts_test "${path##*/}"
+    cd "$oldpwd"
+}
+
+# on entering a dir, execute __INIT__
+ts_init () {
+  $ts_standalone && return
+  local tdir=$(/bin/pwd)
+  if [ "$tdir" != "$TDIR" ]; then
+    ts_end
+    [ -x __INIT__ ] && source __INIT__
+    TDIR="$tdir"
+  fi
+}
+# on leaving, execute __END__
+ts_end () {
+  [ -n "$TDIR" ] && [ -x "$TDIR"/__END__ ] && { 
+    local TODIR="$PWD"; cd "$TDIR"; source __END__; cd "$TODIR"
+  }
+}
+
+# will this test be run for the current level?
+# $1=test file, returns 0 if OK
+# we pre-detect it before running TLEVEL in file, avoiding extra "test ok" mess
+ts_level () {
+  local tlevel=$(grep -oP '^[[:space:]]*TLEVEL +\K.*' "$1")
+  [ -z "$tlevel" ] && return 0 # no TLEVEL line => OK
+  [ -z "$TLEVELS" ] || [[ $tlevel =~ [$TLEVELS] ]] || return 1
+  return 0
+}
+
+# execute a single test in the current directory
+ts_test () {
+  local t="$1" s="#################################"
+  ts_level "$t" || return
+  ts_init
+  TFAILS=0
+  if $debug; then
+    echo "$s$s$nl$s Test: $t$nl$s$s" >>$debuglog
+    bash -x "$t" 2>>$debuglog; status=$?
+  else
+    $TV && echo -n "== Test: $t:"
+    ./"$t" >$ttmp.out 2> >(tee -a $ttmp.err >&1); status=$?
+    let 'ts_failures += status'
+    if [ $status = 0 ]; then
+      if test -s $ttmp.err; then 
+	if $TV; then echo "OK, but printed on stderr:"
+	else echo "###Warning: test $t OK, but printed on stderr:"
+	fi
+	print_indent $ttmp.err
+      else
+	$TV && echo " OK"
+      fi
+    else
+      if $TV; then echo "***ERRORS:$status"
+      else 
+	  echo "***FAILED ($status ERRORS): $t"
+	  if test -s $ttmp.err; then print_indent $ttmp.err; fi
+      fi
+    fi
+    if $TV && test -s $ttmp.out; then print_indent $ttmp.out; fi
+    rm -rf $tmp $tmp.*
+  fi
+}
+
+# print test outputs indented by 3 spaces for lisibility
+print_indent () { sed -e 's/^/   /' <"$1"; }
+
+############################################ Main
+
+# run all tests given in arguments, or in the current dir if none given
+if [ $# == 0 ]; then ts_dir .
+else
+  for t in "$@"; do
+    if [  -d "$t" ]; then ts_dir "$t"
+    elif [ -x "$t" ]; then 
+      if [[ $t =~ / ]]; then ts_test_path "$t"
+      else ts_test "$t"
+      fi
+    else err "$t is not a test!"
+    fi
+  done
+fi
+ts_end
+
+# print global tests results, and exit
+if [ $ts_failures = 0 ]; then V "All tests OK =="
+else echo "== ***** Total tests failed: $ts_failures *****"
+fi
+$debug && echo "== log of execution in $debuglog"
+[ -n "$statusfile" ] && echo "$ts_failures" >"$statusfile"
+exit $ts_failures

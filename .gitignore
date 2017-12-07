@@ -1,0 +1,8 @@
+# -*- mode: gitignore; -*-
+# emacs temporary files
+*~
+\#*\#
+.\#*
+
+# local config files
+*.local

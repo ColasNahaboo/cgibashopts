@@ -1,0 +1,46 @@
+#!/bin/bash
+# run via tewiba
+[ -n "$TEWIBA" ] || exec tewiba -v "$0"
+
+# Testing the form file upload, POST with enctype=multipart/form-data
+# the script form-files/cgibashopts-form-files.cgi has been installed on a
+# server, and submitted via various browsers
+# for a browser B. form-files/$B.data is the input stream fed to the script by
+# the web server, and form-files/$B.vars is the dump of the environment vars
+# the uploaded files sources are in files-unix for the browsers under unix
+# and files-dos for the browsers under windows, as captured by 
+# cgibashopts-form-files.cgi in /tmp/CBOgenf-$B.data and /tmp/CBOgenf-$B.vars
+# In the form, only the files fields should be manually set, do not touch the
+# others before submitting
+
+# We "replay" all the saved CGI invocation data in form-files, so we do not 
+# need a web server, different browsers, and manual steps for the tests
+
+for path in form-files/*.data; do
+    B="${path%.data}"; B="${B##*/}"
+
+    TEST Form file upload from browser $B
+    for v in REQUEST_METHOD CONTENT_TYPE QUERY_STRING; do
+	eval $(grep ^$v= form-files/"$B.vars") # setup the env
+    done
+    . ../cgibashopts <form-files/"$B.data" # simulate a cgi call
+	
+    for i in 1 2 3 4 5; do
+	if ! cmp -s $CGIBASHOPTS_DIR/file$i files-unix/file$i &&
+	    ! cmp -s $CGIBASHOPTS_DIR/file$i files-dos/file$i; then
+	    cp $CGIBASHOPTS_DIR/file$i /tmp/$B-file$i
+	    TERR file $file$i differ for browser $B, saved as /tmp/$B-file$i
+	fi
+	[ "$(param file$i)" = file$i ] || TERR filename of file$1 is: "\"$(param file$i)\""
+    done
+
+    # while we are at it, also test the form vars other than file vars
+    [ "$FORM_text" != "A sample string!" ] && TERR "text is \"$FORM_text\""
+    [ "$FORM_ta" != "ta1${nl}ta2${nl}ta3" ] && TERR "ta is \"$FORM_ta\""
+    [ "$FORM_sel" != "sel3" ] && TERR "sel is \"$FORM_sel\""
+    [ "$FORM_check" != "on" ] && TERR "check is \"$FORM_check\""
+
+    . clearenv.sh
+done
+
+TEND

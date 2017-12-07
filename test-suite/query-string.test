@@ -1,0 +1,55 @@
+#!/bin/bash
+# run via tewiba
+[ -n "$TEWIBA" ] || exec tewiba -v "$0"
+
+# Testing simple parameters in GET mode
+
+TEST Empty querystring
+export QUERY_STRING=
+. ../cgibashopts
+[ -n "$FORMS" ] && TERR FORMS var is defined: $FORMS
+[ -n "${!FORM_*}" ] && TERR Some FORM_ vars defined: ${!FORM_*}
+. clearenv.sh
+
+TEST Indexed search, legacy
+export QUERY_STRING=a+b
+. ../cgibashopts
+[ -n "$FORMS" ] && TERR FORMS var is defined: $FORMS
+[ -n "${!FORM_*}" ] && TERR Some FORM_ vars defined: ${!FORM_*}
+[ "$FORMQUERY" != "a b" ] && TERR "FORMQUERY is \"$FORMQUERY\""
+. clearenv.sh
+
+TEST Single param
+export QUERY_STRING=x=1
+. ../cgibashopts
+[ "$FORMS" == x ] || TERR FORMS is: "\"$FORMS\""
+[ "$FORM_x" == 1 ] || TERR FORM_x is: "\"$FORM_x\""
+. clearenv.sh
+
+TEST Multiple params
+export QUERY_STRING='x=1&y=2;z=3&a_a=4;b_b=5'
+. ../cgibashopts
+[ "$FORMS" == 'x y z a_a b_b' ] || TERR FORMS is: "\"$FORMS\""
+[ "$FORM_x" == 1 ] || TERR FORM_x is: "\"$FORM_x\""
+[ "$FORM_y" == 2 ] || TERR FORM_y is: "\"$FORM_y\""
+[ "$FORM_z" == 3 ] || TERR FORM_z is: "\"$FORM_z\""
+[ "$FORM_a_a" == 4 ] || TERR FORM_a_a is: "\"$FORM_a_a\""
+[ "$FORM_b_b" == 5 ] || TERR FORM_b_b is: "\"$FORM_b_b\""
+TEST param function
+[ "$(param)" == 'x y z a_a b_b' ] || TERR param is: "\"$(param)\""
+[ "$(param x)" == 1 ] || TERR param x is: "\"$(param x)\""
+[ "$(param y)" == 2 ] || TERR param y is: "\"$(param y)\""
+[ "$(param z)" == 3 ] || TERR param z is: "\"$(param z)\""
+[ "$(param a_a)" == 4 ] || TERR param a_a is: "\"$(param a_a)\""
+[ "$(param b_b)" == 5 ] || TERR param b_b is: "\"$(param b_b)\""
+. clearenv.sh
+
+TEST urldecode
+export QUERY_STRING='x=a%2bb+%3D+c+%3d+b%2Ba'
+. ../cgibashopts
+[ "$FORM_x" == 'a+b = c = b+a' ] || TERR FORM_x is: "\"$FORM_x\""
+. clearenv.sh
+us="$(urldecode a%2bb+%3D+c+%3d+b%2Ba)"
+[ "$us" == 'a+b = c = b+a' ] || TERR urldecode is: \"$us\"
+
+TEND
