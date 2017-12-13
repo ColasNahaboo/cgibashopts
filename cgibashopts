@@ -49,8 +49,8 @@ urldecode() {
     echo "$r"
 }
 
-if [ "$REQUEST_METHOD" = POST ]; then
-    if [[ $CONTENT_TYPE =~ ^multipart/form-data\;[[:space:]]*boundary=([^\;]+) ]]; then
+if [ "${REQUEST_METHOD:-}" = POST ]; then
+    if [[ ${CONTENT_TYPE:-} =~ ^multipart/form-data\;[[:space:]]*boundary=([^\;]+) ]]; then
 	sep="--${BASH_REMATCH[1]}"
 	OIFS="$IFS"; IFS=$'\r'
 	while read -r line; do
@@ -100,16 +100,16 @@ if [ "$REQUEST_METHOD" = POST ]; then
 		declare -x FORM_$var="$val"
 	    fi
 	done
-	s="$QUERY_STRING"
+	s="${QUERY_STRING:-}"
 	IFS="$OIFS"
 	unset OIFS
     else
 	stdin=$(cat) # indirection to avoid issues with terminating newlines
-	s="${stdin}&${QUERY_STRING}"
+	s="${stdin}&${QUERY_STRING:-}"
 	unset stdin
     fi
 else
-    s="$QUERY_STRING"
+    s="${QUERY_STRING:-}"
 fi
 
 # regular (no file uploads) arguments processing
