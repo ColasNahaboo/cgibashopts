@@ -34,7 +34,7 @@ param () {
 # decodes the %XX url encoding in $1, same as urlencode -d but faster
 # removes carriage returns to force unix newlines, converts + into space
 urldecode() {
-    local v="${1//+/ }" r d
+    local v="${1//+/ }" r= d
     while [ -n "$v" ]; do
         if [[ $v =~ ^([^%]*)%([0-9a-fA-F][0-9a-fA-F])(.*)$ ]]; then
             eval d="\$'\x${BASH_REMATCH[2]}'"
