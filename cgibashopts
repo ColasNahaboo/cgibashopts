@@ -61,8 +61,11 @@ if [ "$REQUEST_METHOD" = POST ]; then
 		type=
 		read -r line
 		while [ -n "$line" ]; do
-		    [[ $line =~ ^Content-Type:\ *application/octet-stream ]] && type=bin
-		    [[ $line =~ ^Content-Type:\ *text/plain ]] && type=txt
+		    if [[ $line =~ ^Content-Type:\ *text/plain ]]; then
+			type=txt
+		    elif [[ $line =~ ^Content-Type: ]]; then # any other type
+			type=bin
+		    fi
 		    read -r line
 		done
 		if [ "$type" = bin ]; then # binary file upload

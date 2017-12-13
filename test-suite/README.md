@@ -8,3 +8,6 @@ Just run `RUN-ALL-TESTS.sh` to run all the tests silently. No output means every
 - `form-files.test` replays saved data for testing file uploads
 
 `clearenv.sh` is a script to source before (or after) each test to clean all the results of an invocation of cgibashopts, to enable performing multiple tests in the same file.
+
+## Manual tests
+- **form-local/** tests manually the uploads of files through a real browser and web server on your local machine
