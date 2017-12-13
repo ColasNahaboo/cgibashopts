@@ -31,6 +31,8 @@ E.g: `source /usr/local/bin/cgibashopts` or
   - Empty uploaded files will be created, however. They will be empty, of course.
   - Binary and text files received will **not** be converted in the unix text format (lines end with a newline), even if the client uploaded them in a DOS format (lines end with a carriage return and a newline). So you must be ready to handle dos lines in the uploaded text files.
   - **Warning:** A bash cleanup function `cgibashopts_clean` **must** be called at the end of your script to remove the temporary directory `$CGIBASHOPTS_DIR` storing the uploaded files. Note that cgibashopts does a `trap cgibashopts_clean 0` so that this function will be called automatically at the end of your script, so you do not have to do anything, unless you use a `trap 0` yourself, and thus must ensure that your code handling the exit signal explicitely calls `cgibashopts_clean`
+    - sourcing cgibashopts will erase any `trap 0` that was done previously. So, set your trap 0 after sourcing cgibashopts
+    - calling cgibashopts_clean is actually needed only if your html form use input elements of type `file`
 - The variable `CGIBASHOPTS_VERSION` holds the version number (an integer) of the cgibashopts libray used, versions being listed at the end of this page in *History of changes*..
 - Misc goodies:
   - A bash function `urldecode` is provided that takes a string in parameter and outputs its decoded version, transforming `+` in spaces and `%XX` in the character of hexadecimal ascii code XX (e.g %41 becomes A), and removing carriage returns
