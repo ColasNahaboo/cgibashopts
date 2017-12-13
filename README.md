@@ -49,4 +49,5 @@ E.g: `source /usr/local/bin/cgibashopts` or
 A test suite is provided, see the README.md in directory `test-suite`
 
 ## History of changes
-- 2017-12-07 Version 1
+- 2017-12-13 Version 1: fixes for upload of files with various mime-types, library can now be used in scripts using set -u and set -e.
+- 2017-12-07 Creation of the project
