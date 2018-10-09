@@ -3,7 +3,7 @@
 # See https://github.com/ColasNahaboo/cgibashopts
 # Uses the CGI env variables REQUEST_METHOD CONTENT_TYPE QUERY_STRING
 
-export CGIBASHOPTS_VERSION=1
+export CGIBASHOPTS_VERSION=2
 cr=$'\r'
 nl=$'\n'
 export FORMS=
@@ -57,7 +57,7 @@ if [ "${REQUEST_METHOD:-}" = POST ]; then
 	    if [[ $line =~ ^Content-Disposition:\ *form-data\;\ *name=\"([^\"]+)\"(\;\ *filename=\"([^\"]+)\")? ]]; then
 		var="${BASH_REMATCH[1]}"
 		val="${BASH_REMATCH[3]}"
-		[[ $val =~ % ]] && val=$(urldecode "$val")
+		[[ $val =~ [%+] ]] && val=$(urldecode "$val")
 		type=
 		read -r line
 		while [ -n "$line" ]; do
@@ -119,7 +119,7 @@ if [[ $s =~ = ]]; then # modern & (or ;) separated list of key=value
 	val="${BASH_REMATCH[2]}"
 	s="${BASH_REMATCH[3]}"
 	if [[ $var =~ ^[_[:alpha:]] ]]; then # ignore invalid vars
-	    [[ $val =~ % ]] && val=$(urldecode "$val")
+	    [[ $val =~ [%+] ]] && val=$(urldecode "$val")
 	    FORMS="$FORMS${FORMS:+ }$var"
 	    declare -x FORM_$var="$val"
 	fi
