@@ -36,7 +36,7 @@ E.g: `source /usr/local/bin/cgibashopts` or
     - as soon as you have process the uploaded files, you can explicitely call the `cgibashopts_clean` function yourself, so that it is not needed anymore and you are free to use traps as you wish afterwards
     - if you do not expect to have files uploaded, you can use the -n option (see below)
 - **Command line options:**
-  - **-n** can be given to ignore and discard any requests to upload files. This is recommended is you do not expect files to be uploaded, as it can save some computing load if some attacker try to upload fake files, but not mandatory. It also does not defines the variable `$CGIBASHOPTS_DIR` nor the function `cgibashopts_clean`, and do not use trap. **Note:** This is only available in versions 3 and above.
+  - **-n** can be given to ignore and discard any requests to upload files. This is recommended if you do not expect files to be uploaded, as it can save some computing load if some attacker try to upload fake files, but not mandatory. It also does not defines the variable `$CGIBASHOPTS_DIR` nor the function `cgibashopts_clean`, and do not use trap. **Note:** This is only available in versions 3 and above. Example of use : `. cgibashopts -n`
 - The variable `CGIBASHOPTS_VERSION` holds the version number (an integer) of the cgibashopts libray used, versions being listed at the end of this page in *History of changes*..
 - Misc goodies:
   - A bash function `urldecode` is provided that takes a string in parameter and outputs its decoded version, transforming `+` in spaces and `%XX` in the character of hexadecimal ascii code XX (e.g %41 becomes A), and removing carriage returns
