@@ -1,0 +1,28 @@
+#!/bin/bash
+# run via tewiba
+[ -n "$TEWIBA" ] || exec tewiba -v "$0"
+
+# Testing disabling the the form file upload with -n
+# based on the code in form-files.test
+
+for path in form-files/*.data; do
+    B="${path%.data}"; B="${B##*/}"
+
+    TEST Form file upload from browser $B
+    for v in REQUEST_METHOD CONTENT_TYPE QUERY_STRING; do
+	eval $(grep ^$v= form-files/"$B.vars") # setup the env
+    done
+    # fakes a cgi call, which should ignore the files uploads
+    . ../cgibashopts -n <form-files/"$B.data" 
+	
+    if [ -n "$CGIBASHOPTS_DIR" ]; then
+	TERR "CGIBASHOPTS_DIR was defined to $CGIBASHOPTS_DIR"
+	for i in 1 2 3 4 5; do
+	    [ -e "$CGIBASHOPTS_DIR/file$i" ] && TERR "file $file$i was created"
+	done
+    fi
+
+    . clearenv.sh
+done
+
+TEND

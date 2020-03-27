@@ -23,13 +23,18 @@ for path in form-files/*.data; do
     for v in REQUEST_METHOD CONTENT_TYPE QUERY_STRING; do
 	eval $(grep ^$v= form-files/"$B.vars") # setup the env
     done
-    . ../cgibashopts <form-files/"$B.data" # simulate a cgi call
+    . ../cgibashopts <form-files/"$B.data" # fakes a cgi call, creates 5 files
 	
     for i in 1 2 3 4 5; do
-	if ! cmp -s $CGIBASHOPTS_DIR/file$i files-unix/file$i &&
-	    ! cmp -s $CGIBASHOPTS_DIR/file$i files-dos/file$i; then
-	    cp $CGIBASHOPTS_DIR/file$i /tmp/$B-file$i
-	    TERR file $file$i differ for browser $B, saved as /tmp/$B-file$i
+	# check if this file is expected to have DOS lines (CR-terminated)
+        # dos2 is a variant for the weird file5 case with embedded CRs
+	if egrep -qs "(^| )${i}.2( |\$)" form-files/"$B.dos"; then os=dos2
+	elif egrep -qs "(^| )${i}( |\$)" form-files/"$B.dos"; then os=dos
+	else os=unix
+	fi
+	if ! cmp -s $CGIBASHOPTS_DIR/file$i files-$os/file$i; then
+	    cp $CGIBASHOPTS_DIR/file$i /tmp/$B-file-$i
+	    TERR "file $file$i differ for browser $B. See difference from expected to result by: diff $PWD/files-$os/file$i /tmp/$B-file$i"
 	fi
 	[ "$(param file$i)" = file$i ] || TERR filename of file$1 is: "\"$(param file$i)\""
     done

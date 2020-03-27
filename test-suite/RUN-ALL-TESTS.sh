@@ -3,6 +3,10 @@
 # Options: -v for verbose mode
 #          -? for help
 
+# Change dir to where this script is
+scriptpath=$(realpath $(which "$0"))
+cd "${scriptpath%/*}" || exit 1
+
 # Sanity check: stop immediately if we have a syntax error in the lib
 bash -n ../cgibashopts || { 
      echo "***ABRTING: syntax errors in cgibashopts" >&2; exit 1
