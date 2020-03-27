@@ -30,9 +30,13 @@ E.g: `source /usr/local/bin/cgibashopts` or
   - Only actually uploaded files are created and listed this way. If the user does not select any file in the form, the shell variable will not be defined not any file created.
   - Empty uploaded files will be created, however. They will be empty, of course.
   - Binary and text files received will **not** be converted in the unix text format (lines end with a newline), even if the client uploaded them in a DOS format (lines end with a carriage return and a newline). So you must be ready to handle dos lines in the uploaded text files.
-  - **Warning:** A bash cleanup function `cgibashopts_clean` **must** be called at the end of your script to remove the temporary directory `$CGIBASHOPTS_DIR` storing the uploaded files. Note that cgibashopts does a `trap cgibashopts_clean 0` so that this function will be called automatically at the end of your script, so you do not have to do anything, unless you use a `trap 0` yourself, and thus must ensure that your code handling the exit signal explicitely calls `cgibashopts_clean`
+  - **Warning:** A bash cleanup function `cgibashopts_clean` **must** be called at the end of your script to remove the temporary directory `$CGIBASHOPTS_DIR` storing the uploaded files, if the `-n` option (see below) is not used. Cgibashopts does a `trap cgibashopts_clean 0` so that this function will be called automatically at the end of your script, so you do not have to do anything, unless you use a `trap 0` yourself, and thus must ensure that your code handling the exit signal explicitely calls `cgibashopts_clean`.
     - sourcing cgibashopts will erase any `trap 0` that was done previously. So, set your trap 0 after sourcing cgibashopts
     - calling cgibashopts_clean is actually needed only if your html form use input elements of type `file`
+    - as soon as you have process the uploaded files, you can explicitely call the `cgibashopts_clean` function yourself, so that it is not needed anymore and you are free to use traps as you wish afterwards
+    - if you do not expect to have files uploaded, you can use the -n option (see below)
+- **Command line options:**
+  - **-n** can be given to ignore and discard any requests to upload files. This is recommended is you do not expect files to be uploaded, as it can save some computing load if some attacker try to upload fake files, but not mandatory. It also does not defines the variable `$CGIBASHOPTS_DIR` nor the function `cgibashopts_clean`, and do not use trap. **Note:** This is only available in versions 3 and above.
 - The variable `CGIBASHOPTS_VERSION` holds the version number (an integer) of the cgibashopts libray used, versions being listed at the end of this page in *History of changes*..
 - Misc goodies:
   - A bash function `urldecode` is provided that takes a string in parameter and outputs its decoded version, transforming `+` in spaces and `%XX` in the character of hexadecimal ascii code XX (e.g %41 becomes A), and removing carriage returns
@@ -49,6 +53,7 @@ E.g: `source /usr/local/bin/cgibashopts` or
 A test suite is provided, see the README.md in directory `test-suite`
 
 ## History of changes
+- 2020-03-27 Version 3: -n option added to disable file uploads
 - 2018-10-09 Version 2: fix, spaces in parameter values could be seen as +
 - 2017-12-13 Version 1: fixes for upload of files with various mime-types, library can now be used in scripts using set -u and set -e.
 - 2017-12-07 Creation of the project

@@ -3,17 +3,22 @@
 # See https://github.com/ColasNahaboo/cgibashopts
 # Uses the CGI env variables REQUEST_METHOD CONTENT_TYPE QUERY_STRING
 
-export CGIBASHOPTS_VERSION=2
+export CGIBASHOPTS_VERSION=3
 cr=$'\r'
 nl=$'\n'
 export FORMS=
 export FORMFILES=
 export FORMQUERY=
-export CGIBASHOPTS_DIR=/tmp/cgibashopts-files.$$
-cgibashopts_clean() { 
- [ -n "$CGIBASHOPTS_DIR" ] && [ -d "$CGIBASHOPTS_DIR" ] && rm -rf "$CGIBASHOPTS_DIR"
-}
-trap cgibashopts_clean 0
+if [ x"$1" != x-n ]; then
+    export CGIBASHOPTS_DIR=/tmp/cgibashopts-files.$$
+    CGIBASHOPTS_TMP="$CGIBASHOPTS_DIR.tmp"
+    cgibashopts_clean() { 
+	[ -n "$CGIBASHOPTS_DIR" ] && [ -d "$CGIBASHOPTS_DIR" ] && rm -rf "$CGIBASHOPTS_DIR"
+    }
+    trap cgibashopts_clean 0
+else
+    CGIBASHOPTS_TMP=/dev/null
+fi
 
 # emulates bashlib param function. -f operate on uploaded file paths
 param () { 
@@ -70,15 +75,16 @@ if [ "${REQUEST_METHOD:-}" = POST ]; then
 		done
 		if [ "$type" = bin ]; then # binary file upload
 		    # binary-read stdin till next step
-		    sed -n -e "{:loop p; n;/^$sep/q; b loop}" >"$CGIBASHOPTS_DIR.tmp"
-		    truncate -s -2 "$CGIBASHOPTS_DIR.tmp" # remove last \r\n
+		    sed -n -e "{:loop p; n;/^$sep/q; b loop}" >$CGIBASHOPTS_TMP
+		    [ $CGIBASHOPTS_TMP != /dev/null ] && \
+			truncate -s -2 $CGIBASHOPTS_TMP # remove last \r\n
 		elif [ "$type" = txt ]; then # text file upload
 		    lp=
 		    while read -r line; do
 			[[ $line =~ ^"$sep" ]] && break
 			echo -n "$lp$line"
 			lp="$nl"
-		    done >"$CGIBASHOPTS_DIR.tmp"
+		    done >$CGIBASHOPTS_TMP
 		else # string, possibly multi-line
 		    val=
 		    while read -r line; do
@@ -87,13 +93,16 @@ if [ "${REQUEST_METHOD:-}" = POST ]; then
 		    done
 		fi
 		if [ -n "$type" ]; then
-		    if [ -n "$val" ]; then # a file was uploaded, even empty
-			[ -n "$FORMFILES" ] || mkdir -p "$CGIBASHOPTS_DIR"
-			FORMFILES="$FORMFILES${FORMFILES:+ }$var"
-			declare -x FORMFILE_$var="$CGIBASHOPTS_DIR/${var}"
-			mv "$CGIBASHOPTS_DIR.tmp" "$CGIBASHOPTS_DIR/${var}"
-		    else
-			rm -f "$CGIBASHOPTS_DIR.tmp"
+		    if [ $CGIBASHOPTS_TMP != /dev/null ]; then
+			if [ -n "$val" ]; then
+                            # a file was uploaded, even empty
+			    [ -n "$FORMFILES" ] || mkdir -p "$CGIBASHOPTS_DIR"
+			    FORMFILES="$FORMFILES${FORMFILES:+ }$var"
+			    declare -x FORMFILE_$var="$CGIBASHOPTS_DIR/${var}"
+			    mv $CGIBASHOPTS_TMP "$CGIBASHOPTS_DIR/${var}"
+			else
+			    rm -f $CGIBASHOPTS_TMP
+			fi
 		    fi
 		fi
 		FORMS="$FORMS${FORMS:+ }$var"
