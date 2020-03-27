@@ -1,0 +1,3 @@
+# force cleanup as we overwrote tewiba "trap 0" with cigibashoptions one
+trap TCLEANUP 0
+
