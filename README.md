@@ -50,9 +50,10 @@ E.g: `source /usr/local/bin/cgibashopts` or
     - `param -f foo a string...` sets the value of `FORMFILE_foo` to `"a string..."`
 
 ## Test suite
-A test suite is provided, see the README.md in directory `test-suite`
+A test suite is provided, it can be run by `./RUN-ALL-TESTS`, for more details see the README.md in directory `test`
 
 ## History of changes
+- 2020-04-04 Some cosmetic changes in this doc and the tests (test-suite dir renamed as tests), but no changes to tewiba itself, so no version number increase.
 - 2020-03-27 Version 3: -n option added to disable file uploads
 - 2018-10-09 Version 2: fix, spaces in parameter values could be seen as +
 - 2017-12-13 Version 1: fixes for upload of files with various mime-types, library can now be used in scripts using set -u and set -e.
