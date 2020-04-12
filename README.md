@@ -7,7 +7,7 @@ Cgibashopts is a small and fast pure BASH library to parse web forms parameters 
 E.g. as `/usr/local/bin/cgibashopts`
 - Just source this file at the beginning of your CGI bash scripts.
 E.g: `source /usr/local/bin/cgibashopts` or 
-`. usr/local/bin/cgibashopts`
+`. /usr/local/bin/cgibashopts`
 - The value of a web form parameter `foo` (E.g. in the HTML page: `<input type=text name=foo>`) can then be found as the value of the shell environment variable `$FORM_foo`
 
 ## Features

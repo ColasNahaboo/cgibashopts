@@ -1,5 +1,5 @@
 #!/bin/bash
-export TEWIBA=1.3.1
+export TEWIBA=1.4.0
 USAGE='tewiba [options] [tests...]
 Tewiba: TEst WIth BAsh: a simple test suite, in the spirit of shell scripting
 Runs the test suite, on all tests in the current dir (default), 
@@ -34,7 +34,8 @@ How to write tests:
      TLEVEL chars  only runs if a level in chars is in the ones given by -l,
                    or -l not specified. Each level is an alphanumeric char.
      TLEVEL_ONLY chars    Same as above but does not run if -l not given 
-     TEST message  prints (sub)test name if verbose
+     TEST message  prints sub-test (the file name is the test name) name if 
+                   verbose, or before the first error of this subtest
      TERR message  declares an error, but continues the tests
      FERR message  fatal error: also aborts the current test file
      TEND          MANDATORY: terminates your test script.
@@ -52,6 +53,7 @@ How to write tests:
                    [ -n "$TEWIBA" ] || exec tewiba -v "$0"
                    so that the test file can be executed standalone
      $TEWIBADIR    the original directory where tewiba was run
+   * All tewiba functions above print on stderr.
    * IMPORTANT: the shell function TCLEANUP must be called at the end of the
      tests, to clean the temporary data. tewiba traps the signal 0 for this.
      if you redefine trap 0 in your tests, or in a script you source, you 
@@ -117,11 +119,20 @@ export nl=$'\n' #'
 export TFAILS=0
 export TDIR=
 export TIDS=' '
+export _TEST_CURRENT=
 TLEVEL () { [ -z "$TLEVELS" ] || [[ $* =~ [$TLEVELS] ]] || ts_exit; }
 TLEVEL_ONLY () { [[ $* =~ [$TLEVELS] ]] || ts_exit; }
-TEST () { $TV && echo "== $*"; }
-TERR () { echo "***TEST ERROR ${0##*/}*** $*" ; let TFAILS++; }
-FERR () { echo "***FATAL ERROR ${0##*/}*** $*" ; let TFAILS++; ts_exit $TFAILS; }
+TEST () { _TEST_CURRENT="$*"; $TV && echo "== $*" >&2; }
+TERR () {
+    $TV && [ -n "$_TEST_CURRENT" ] && 
+    { echo "== $_TEST_CURRENT" >&2;_TEST_CURRENT=;}
+    echo "***TEST ERROR ${0##*/}*** $*" >&2; let TFAILS++
+}
+FERR () {
+    $TV && [ -n "$_TEST_CURRENT" ] &&
+    { echo "== $_TEST_CURRENT" >&2;_TEST_CURRENT=;}
+    echo "***FATAL ERROR ${0##*/}*** $*" >&2; let TFAILS++; ts_exit $TFAILS
+}
 TEND () { ts_exit $TFAILS; }
 TINIT () { # TINITS is a per-dir file containing the loaded IDs
   local id="${1//[^-_.a-zA-Z0-9/}"; [ -n "$id" ] || return; 
