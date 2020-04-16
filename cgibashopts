@@ -3,7 +3,7 @@
 # See https://github.com/ColasNahaboo/cgibashopts
 # Uses the CGI env variables REQUEST_METHOD CONTENT_TYPE QUERY_STRING
 
-export CGIBASHOPTS_VERSION=3
+export CGIBASHOPTS_VERSION=4
 cr=$'\r'
 nl=$'\n'
 export FORMS=
@@ -52,6 +52,18 @@ urldecode() {
         fi
     done
     echo "$r"
+}
+
+# the reverse of urldecode above
+urlencode() {
+    local length="${#1}" i c
+    for (( i = 0; i < length; i++ )); do
+        c="${1:i:1}"
+        case $c in
+            [a-zA-Z0-9.~_-]) printf "$c" ;;
+            *) printf '%%%02X' "'$c" ;;
+        esac
+    done
 }
 
 if [ "${REQUEST_METHOD:-}" = POST ]; then

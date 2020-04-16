@@ -39,7 +39,9 @@ E.g: `source /usr/local/bin/cgibashopts` or
   - **-n** can be given to ignore and discard any requests to upload files. This is recommended if you do not expect files to be uploaded, as it can save some computing load if some attacker try to upload fake files, but not mandatory. It also does not defines the variable `$CGIBASHOPTS_DIR` nor the function `cgibashopts_clean`, and do not use trap. **Note:** This is only available in versions 3 and above. Example of use : `. cgibashopts -n`
 - The variable `CGIBASHOPTS_VERSION` holds the version number (an integer) of the cgibashopts libray used, versions being listed at the end of this page in *History of changes*..
 - Misc goodies:
-  - A bash function `urldecode` is provided that takes a string in parameter and outputs its decoded version, transforming `+` in spaces and `%XX` in the character of hexadecimal ascii code XX (e.g %41 becomes A), and removing carriage returns
+  - Two handy bash functions are provided: 
+    - `urldecode` that takes a string in parameter and outputs its decoded version, transforming `+` in spaces and `%XX` in the character of hexadecimal ascii code XX (e.g %41 becomes A), and removing carriage returns. 
+    - `urlencode` that performs the reverse operation. Both are faster than the binary linux commands.
   - two variables `$nl` and `$cr` hold a newline and a carriage return character
   - An alternate way to get the variables values is via the `param` function. This is just a convenience function compatible with [bashlib](http://bashlib.sourceforge.net/) for people (or scripts) used to it.
     - `param` without argument outputs the value of `FORMS` 
@@ -53,6 +55,7 @@ E.g: `source /usr/local/bin/cgibashopts` or
 A test suite is provided, it can be run by `./RUN-ALL-TESTS`, for more details see the README.md in directory `tests`
 
 ## History of changes
+- 2020-04-16 Version 4: urlencode goodie function added
 - 2020-04-04 Some cosmetic changes in this doc and the tests (test-suite dir renamed as tests), but no changes to cgibashopts code itself, so no version number increase.
 - 2020-03-27 Version 3: -n option added to disable file uploads
 - 2018-10-09 Version 2: fix, spaces in parameter values could be seen as +
