@@ -7,6 +7,8 @@
 # a simple way to run all the tests in the distrib.
 # (c) 2020 Colas Nahaboo http://colas.nahaboo.net/Software/Tewiba - MIT License
 
+#TEWIBA_IGNORE# This is not a tewiba test.
+
 # Change dir to where this script is, if was called via a complete path
 scriptpath=$(realpath $(which "$0"))
 cd "${scriptpath%/*}" || exit 1
@@ -24,9 +26,12 @@ unset TEWIBA			# clean slate for tewiba
 # otherwise, run all the *.test files in the tests/ dir in alphabetical order
 # to run a single test, go into tests and run it directly (verbose mode)
 # or as argument to tewiba (terse mode), e.g: cd tests; tewiba foo.test
-# we look for the tewiba executable in tests/ or above, or on the system
+# we look for the tewiba executable in ./, tests/, ../, $PATH
 
-[ -d tests ] && cd tests || exit 1
+if [ -d tests ]; then cd tests
+elif [[ $PWD =~ tests$ ]]; then :
+else echo "***ERROR: must be run in a tests dir or above one"; exit 1
+fi
 
 if [ -x tewiba ]; then tewiba=./tewiba
 elif [ -x ../tewiba ]; then tewiba=../tewiba
@@ -34,6 +39,4 @@ elif command -v tewiba >/dev/null; then tewiba=tewiba
 else { echo "***ABORTING: tewiba executable not found" >&2; exit 1; }
 fi
 
-for test in *.test; do
-    [ "$test" != "*.test" ] && $tewiba $* "$test"
-done
+$tewiba "$@" .

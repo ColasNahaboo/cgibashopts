@@ -1,9 +1,10 @@
 #!/bin/bash
-export TEWIBA=1.5.0-beta.10
+export TEWIBA=1.5.0-pre.3
 USAGE='tewiba [options] [tests...]
 Tewiba: TEst WIth BAsh: a simple test suite, in the spirit of shell scripting
-Runs the test suite, on all tests in the current dir (default), 
-or on specific tests or directories of tests given as arguments.
+Runs the test suite, without arguments on all tests in the tests/ subdir or
+the current dir (default), or on specific tests or directories of tests given
+as arguments.
    * Tests are given as arguments, and executed in order, they can be either
       * an executable file
       * a directory, all non-empty executable files in it will be run as tests
@@ -64,15 +65,31 @@ Filenames beginning with a "." "#" "_" or ending with "~" are ignored
                    -S let-expr  expects let arithmetic expression to be true,
                                 with the variable "status" holding the status
      TECHO text    An echo that prints on stderr, only in verbose mode, but
-                   that yewiba do not confuse with code errors in subtests.
-     TECHOF text   Same, but prints also in non-verbose mode.
+                   that tewiba do not confuse with code errors in subtests.
+                   -n      do not terminate by a newline, as with echo -n
+                   -v      (default) only prints in verbose move (TV == true)
+                   -f      forces printing even in non-verbose mode
+                   -c key  if the output is on a terminal, colors the
+                           text as defined for key in $TEWIBA_COLORS
+                           key can be just the first letter(s) of the 
+                           predefined keys, or any key you added to
+                           $TEWIBA_COLORS
      TINIT id...   For each id (composed of letters, numbers, and _ - .)
                    ensures that files __INIT__id and __END__id are sourced,
                    if they exist, before and after all tests of the file,
                    after and before __INIT__ and __END__ respectively.
      TLEVEL chars  only runs if a level in chars is in the ones given by -l,
                    or -l not specified. Each level is an alphanumeric char.
-     TLEVEL_ONLY chars    Same as above but does not run if -l not given 
+                   TLEVEL is a simpler alternative to TCLASS below. Option:
+                   -x      does not run if the tewiba option -l is not used.
+     TLEVEL_ONLY chars     An alias for TLEVEL -x for backwards compatibility.
+     TCLASS classes...     specify the classes of the test. Which tests are run
+                   can then be specified with the -c option of tewiba.
+                   classes can be prefixed by ! for negation, meaning that 
+                   the test will not run if the class was specified in -c.
+                   TCLASS can have the option "-x" to specify that the test
+                   should not run by default (without a -c option to tewiba),
+                   e.g. an "xtra" test, not convenient for general use. 
      TWEIBA_IGNORE regular expressions...
                    ignores the file names matching expressions (for [[ =~ ]])
                    should be used in a __INIT__ file to apply to the whole dir
@@ -80,6 +97,24 @@ Filenames beginning with a "." "#" "_" or ending with "~" are ignored
      $TV           is true in tewiba verbose mode, false otherwise.
      $tmp          temporary data prefix (see above).
      $nl           is the newline character.
+     $TEWIBA_COLORS    Colors for the tewiba messages, in the same syntax as
+                   LS_COLORS (see man dircolors), as colon-separated key=value
+                   pairs, where value is a set of color codes separated by 
+                   semicolons. You can set it at will, the default being:
+                   "none=0:error=31:fatal=1;31:info=36:title=34:ok=32:\
+                    allok=32;4:warning=35"
+                   and you can extend it with any extra keys for use in your
+                   own TECHO statements. Try to keep the first 2 letters
+                   unique, so that you can use only them for TECHO -c
+                   The standard tewiba keys being:
+                     none      no style
+                     error     error messages
+                     fatal     fatal or total error messages
+                     info      misc information (e.g. file skipped)
+                     title     the title of a section, e.g. a test file name
+                     ok        test result OK
+                     allok     final result: all tests OK
+                     warning   not a test failure, but something is fishy
      $TEWIBA       the version number of tewiba. Uses semantic versioning.
                    Trick: put after #!/bin/bash the line:
                    [ -n "$TEWIBA" ] || exec tewiba -v "$0"
@@ -102,9 +137,16 @@ Options:
    -V      just prints tewiba version number
    -x      debug: execute each test in set -x mode copying also the output to
            /tmp/tewiba.$LOGNAME.out Note: does not imply -v
-   -l levels  runs only tests of the levels (characters) in the string levels
+   -l levels    runs only tests of the levels (characters) in the string levels
            "TLEVEL x" in a test runs when given "-l y" if [y] matches x:
            thus ranges are possible: -l 0-3 matches a TLEVEL 17a
+   -c class-expr...   runs only the tests which have one class specified by 
+           TCLASS in them that matches one of the class-expr (a space or
+           comma-separated list of class names, or [[...]] posix regepx)
+           class-expr can this be a simple class name, or a regexp matching
+           class names. Matches are made sequentially: "-c short !db" will run
+           all short tests except the db ones, "-c medium !db short" will run
+           all medium non-db ones, but also all the short ones, even with a db
    -s      standalone: do not read __INIT__ nor __END__ files
    -e file outputs the total number of errors in the file. 
    -f      forces running tests files even without a TEND directive in them.
@@ -122,7 +164,6 @@ Version '"$TEWIBA"' - Web site: http://colas.nahaboo.net/Software/Tewiba
 Copyright (c) 2013-2020 Colas Nahaboo (http://colas.nahaboo.net)
 MIT License: http://opensource.org/licenses/MIT
 '
-n=T;for i in {0..3};do [ -t $i ]&&n=$n.T$i||n=$n._$i;done;echo $n>>/tmp/T
 
 #TEWIBA_IGNORE# This is not a tewiba test.
 ############################################ Options parsing
@@ -131,9 +172,11 @@ export _debuglog=/tmp/tewiba.$LOGNAME.xlog
 export statusfile=
 export ts_standalone=false
 export TEWIBADIR=$(realpath "$PWD")
-declare -x -a TLEVELS
+export _TLEVELS
 export TV
 export must_tend=true
+declare -xa _TCLASS_RE
+_TCLASS_RE_STRING=
 
 OPTIONS='e:l:xsvV'
 #----https://github.com/ColasNahaboo/bashoptions--------------getopts----v0.2.1
@@ -142,7 +185,8 @@ err(){ E "***ERROR: $*" >&2; exit 1;};warn(){ E "###Warning: $*" >&2;}
 while getopts ":${OPTIONS}hv?" _o; do case "$_o" in
 #----single letter options start-----------------------------------------
     e) statusfile="$OPTARG";;
-    l) TLEVELS=(${OPTARG//,/ });; # convert to an array
+    l) _TLEVELS=${OPTARG//[^-[:alnum:]]/};; # for use in [...] regexpes
+    c) _TCLASS_RE_STRING="$OPTARG";;
     x) _debug=true;;
     s) ts_standalone=true;;
     f) must_tend=false;;
@@ -159,6 +203,14 @@ if $_debug; then
     rm -f "$_debuglog"
 fi
 
+# sets each class matching regexp into an element of the _TCLASS_RE array 
+if [ -n "$_TCLASS_RE_STRING" ]; then
+    while [[ $_TCLASS_RE_STRING =~ ^[[:space:],]*([^[:space:],]+)(.*$) ]]; do
+	_TCLASS_RE+=("${BASH_REMATCH[1]}")
+	_TCLASS_RE_STRING="${BASH_REMATCH[2]}"
+    done
+fi
+
 ############################################ Tewiba API: usable funcs & vars
 # These can be used in your tests script files.
 
@@ -172,6 +224,9 @@ export tmp=/tmp/tewiba.$$
 export nl=$'\n' #'
 export TFAILS=0
 export TOTEST
+# normal error fatalerror info filename ok allok warning. See man dircolors
+export TEWIBA_COLORS; [ -z "$TEWIBA_COLORS" ] && \
+    TEWIBA_COLORS=':-none=0:error=31:fatal=1;31:info=36:title=34:ok=32:allok=32;4:warning=35'
 # Except the internal ones below, that start with an underscore "_"
 export _ts_failures=0		# cumulative total of TFAILS
 export _twtmp=/tmp/tewiba-main.$$ # tewiba-reserved temp zone
@@ -185,17 +240,13 @@ export _TEWIBA_IGNORE='^$'      # regexp for ignored files
 # at toplevel, tewiba fd gets merged into stderr
 [ -z "$_twfd" ] && exec 3>&2 && _twfd=3
 
-TLEVEL(){ [ -z "$TLEVELS" ] || [[ $* =~ [$TLEVELS] ]] || _ts_skip; }
-TLEVEL_ONLY(){ [[ $* =~ [$TLEVELS] ]] || _ts_skip; }
 TEST(){ _TEST_CURRENT="$*"; TECHO "== $*"; }
-TERR(){ TECHOF "***TEST ERROR ${_TEST_CURRENT}*** $*"; let TFAILS++;}
+TERR(){ TECHO -fc er  "***TEST ERROR ${_TEST_CURRENT}*** $*"; let TFAILS++;}
 FERR(){
-    TECHOF "***FATAL ERROR ${_TEST_CURRENT}*** $*"; let TFAILS++
+    TECHO -fc fa "***FATAL ERROR ${_TEST_CURRENT}*** $*"; let TFAILS++
     _ts_exit $TFAILS
 }
 TEND(){ _ts_exit $TFAILS; }
-TECHO(){ $TV && TECHOF "$@" || return;}
-TECHOF(){ echo "$@" >&3;}
 TINIT(){
     $ts_standalone && return
     local id; _TINITS=
@@ -207,12 +258,42 @@ TINIT(){
     done
     _tinits_push $_TINITS
 }
-TCLEANUP(){ # with guards to avoid disaster if something undefined the vars
-    ts_chdir
-    [ -n "$_twtmp" ] && rm -rf $_twtmp $_twtmp.*
-    [ -n "$tmp" ] && rm -rf $tmp $tmp.*
+
+TLEVEL(){ if [[ "$1" = '-x' ]]; then shift; TLEVEL_ONLY "$@"; else
+	[ -z "$_TLEVELS" ] || [[ $* =~ [$_TLEVELS] ]] || _ts_skip; fi
 }
-trap TCLEANUP 0
+TLEVEL_ONLY(){ [[ $* =~ [$_TLEVELS] ]] || _ts_skip; }
+
+TCLASS(){
+    local initstatus=0 status class re
+    [[ "$1" = '-x' ]] && initstatus=1 && shift
+    [ "${#_TCLASS_RE[@]}" = 0 ] && status=$initstatus || status=1
+    for re in "${_TCLASS_RE[@]}"; do for class in "$@"; do
+	    if [[ $class =~ ^${re#!}$ ]]; then
+		[[ $re =~ ^[!] ]] && status=1 || status=0
+	    fi
+    done; done
+    return "${status:-$initstatus}"
+}
+
+# Printing tewiba messages out of the way of stdout & stderr of the tests
+TECHO(){
+    local opt normal=true key eopt cs ce 
+    OPTIND=1; while getopts 'vfnc:' opt; do case "$opt" in
+	v) :;;
+        f) normal=false;;
+        n) eopt='-n';;
+        c) key="${OPTARG//[^[:alpha:]]/}";;
+    esac; done; shift $((OPTIND-1))
+    $normal && ! $TV && return
+    if [ -n "$key" ] && [ -t 3 ] && \
+	[[ $TEWIBA_COLORS =~ (^|:)$key[[:alpha:]]*=([^:]*) ]]; then
+	cs=$'\e['${BASH_REMATCH[2]}m; ce=$'\e[0m'
+	echo $eopt "$cs""$@""$ce" >&3;
+    else
+	echo $eopt "$@" >&3;
+    fi
+}
 
 # Usage: DOTEST [options] command-to-test its-options...
 DOTEST(){
@@ -255,6 +336,13 @@ TEWIBA_IGNORE(){
     _TEWIBA_IGNORE="${_TEWIBA_IGNORE/%|/)}"
 }
 
+TCLEANUP(){ # with guards to avoid disaster if something undefined the vars
+    ts_chdir
+    [ -n "$_twtmp" ] && rm -rf $_twtmp $_twtmp.*
+    [ -n "$tmp" ] && rm -rf $tmp $tmp.*
+}
+trap TCLEANUP 0
+
 # push back the TINITS from the child test process to the underlying tewiba
 _tinits_push(){ echo "$_cd $*" >>$_twtmp.endids;}
 
@@ -265,10 +353,10 @@ _ts_exit(){ exit "${1:-0}"; }
 _ts_skip(){ [ -n "$_TSKIP" ] && >$_TSKIP; exit 0; }
 
 # source if exist, and trace if verbose 
-_ts_source(){ [ -f "$1" ] && { TECHO "== Sourcing $1"; . "$1";};}
+_ts_source(){ [ -f "$1" ] && { TECHO -c ti "== Sourcing $1"; . "$1";};}
 
 # export these functions to be usable in test scripts
-export -f TLEVEL_ONLY TLEVEL TEST TERR FERR TEND TECHO TECHOF TINIT TCLEANUP \
+export -f TLEVEL_ONLY TLEVEL TEST TERR FERR TEND TECHO TINIT TCLEANUP \
  DOTEST TEWIBA_IGNORE \
     _tinits_push _ts_exit _ts_skip _ts_source
 
@@ -375,7 +463,7 @@ ts_dir(){
 ts_level(){
     local tlevel=$(grep -oP '^[[:space:]]*TLEVEL +\K.*' "$1")
     [ -z "$tlevel" ] && return 0 # no TLEVEL line => OK
-    [ -z "$TLEVELS" ] || [[ $tlevel =~ [$TLEVELS] ]] || return 1
+    [ -z "$_TLEVELS" ] || [[ $tlevel =~ [$_TLEVELS] ]] || return 1
     return 0
 }
 
@@ -395,29 +483,29 @@ ts_test(){
         # RUN TEST in Trace Mode
 	bash -x "$t" >>$_debuglog 2>&1 3>&1; status=$? # merge all outputs
     else
-	TECHO "== Test file: $f:"
+	TECHO -c ti "== Test file: $f:"
 	_TSKIP=$_twtmp.skip.$$
         # RUN TEST
 	"$t" 2>$_twtmp.err >$_twtmp.out; status=$?
 	if $TV && test -s $_twtmp.out; then print_indent $_twtmp.out; fi
 	if [ -e "$_TSKIP" ]; then
-	    TECHO "   Skipped"
+	    TECHO -c in "   Skipped"
 	    rm -f "$_TSKIP"
 	else
 	    let '_ts_failures += status'
 	    if [ $status == 0 ]; then
 		if test -s $_twtmp.err; then 
-		    if $TV; then TECHO "== OK, but printed on stderr:"
-		    else TECHOF "###Warning: test $f OK, but printed on stderr:"
+		    if $TV; then TECHO -c wa "== OK, but printed on stderr:"
+		    else TECHO -fc wa "###Warning: test $f OK, but printed on stderr:"
 		    fi
 		    print_indent $_twtmp.err
 		else
-		    TECHO "== OK"
+		    TECHO -c ok "== OK"
 		fi
 	    else
-		if $TV; then TECHO "***ERRORS:$status"
+		if $TV; then TECHO -c er "***ERRORS:$status"
 		else 
-		    TECHOF "***FAILED ($status ERRORS): $f"
+		    TECHO -fc er "***FAILED ($status ERRORS): $f"
 		    if test -s $_twtmp.err; then print_indent $_twtmp.err; fi
 		fi
 	    fi
@@ -436,8 +524,9 @@ is_subdir_of(){ [ -n "$2" ]&&[ "${1:0:${#2}}" == "$2" ]&&[ "$1" != "$2" ];}
 # run all tests given in arguments, or in the current dir if none given
 
 if [ $# == 0 ]; then
-	ts_chdir .
-	ts_dir .
+    [ -d tests ] && cd tests
+    ts_chdir .
+    ts_dir .
 else
     for t in "$@"; do
 	cd "$TEWIBADIR"		# if t is a relative path
@@ -459,9 +548,9 @@ fi
 [ -n "$_cd" ] && { ts_chdir; _cd=;}
 
 ############################################ Epilogue: print results, and exit
-if [ $_ts_failures = 0 ]; then V "All tests OK =="
-else echo "== ***** Total tests failed: $_ts_failures *****"
+if [ $_ts_failures = 0 ]; then TECHO -c ao "All tests OK =="
+else TECHO -fc fa "== ***** Total tests failed: $_ts_failures *****"
 fi
-$_debug  && TECHOF "== log of execution in $_debuglog for $*"
+$_debug  && TECHO -fc no "== log of execution in $_debuglog for $*"
 [ -n "$statusfile" ] && echo "$_ts_failures" >"$statusfile"
 _ts_exit $_ts_failures

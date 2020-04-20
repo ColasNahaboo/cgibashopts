@@ -52,9 +52,10 @@ E.g: `source /usr/local/bin/cgibashopts` or
     - `param -f foo a string...` sets the value of `FORMFILE_foo` to `"a string..."`
 
 ## Test suite
-A test suite is provided, it can be run by `./RUN-ALL-TESTS`, for more details see the README.md in directory `tests`
+A test suite is provided, it can be run by `./tests/RUN-ALL-TESTS`, for more details see the README.md in directory `tests`
 
 ## History of changes
+- 2020-04-20 non-code reorg: moved most files out of the main view, in tests/
 - 2020-04-16 Version 4: urlencode goodie function added
 - 2020-04-04 Some cosmetic changes in this doc and the tests (test-suite dir renamed as tests), but no changes to cgibashopts code itself, so no version number increase.
 - 2020-03-27 Version 3: -n option added to disable file uploads
