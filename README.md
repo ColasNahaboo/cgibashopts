@@ -54,6 +54,13 @@ E.g: `source /usr/local/bin/cgibashopts` or
 ## Test suite
 A test suite is provided, it can be run by `./tests/RUN-ALL-TESTS`, for more details see the README.md in directory `tests`
 
+## Feedback
+Feel welcome to copy and enhance this project, as well as providing bug reports, feedback, suggestions via:
+- Creating [issues](https://gitreports.com/issue/ColasNahaboo/cgibashopts), if you have a GitHub account.
+- Use the provided [Git Report Form](https://gitreports.com/issue/ColasNahaboo/cgibashopts) to create an issue if you do not have a GitHib account.
+- Create or participate in a [Discussion](https://github.com/ColasNahaboo/cgibashopts/discussions) on this project
+- Or just email me: colas@nahaboo.net
+
 ## History of changes
 - 2020-04-20 non-code reorg: moved most files out of the main view, in tests/, tewiba upgraded to 1.5.0-pre.3
 - 2020-04-16 Version 4: urlencode goodie function added
