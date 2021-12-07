@@ -10,7 +10,9 @@ export FORMS=
 export FORMFILES=
 export FORMQUERY=
 if [ x"$1" != x-n ]; then
-    export CGIBASHOPTS_DIR=/tmp/cgibashopts-files.$$
+    if [ -z $CGIBASHOPTS_DIR ]; then
+        export CGIBASHOPTS_DIR=/tmp/cgibashopts-files.$$
+    fi
     CGIBASHOPTS_TMP="$CGIBASHOPTS_DIR.tmp"
     cgibashopts_clean() { 
 	[ -n "$CGIBASHOPTS_DIR" ] && [ -d "$CGIBASHOPTS_DIR" ] && rm -rf "$CGIBASHOPTS_DIR"
