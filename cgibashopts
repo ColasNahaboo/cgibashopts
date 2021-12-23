@@ -26,12 +26,12 @@ param () {
         shift
         if [ $# -eq 0 ]; then echo "$FORMFILES"
         elif [ $# -eq 1 ]; then eval echo "\$FORMFILE_$1"
-        else declare -x FORMFILE_$1="$*"
+        else declare -x "FORMFILE_$1=$*"
 	fi
     else
 	if [ $# -eq 0 ]; then echo "$FORMS"
 	elif [ $# -eq 1 ]; then eval echo "\$FORM_$1"
-	else declare -x FORM_$1="$*"
+	else declare -x "FORM_$1=$*"
 	fi
     fi
 }
@@ -39,7 +39,7 @@ param () {
 # decodes the %XX url encoding in $1, same as urlencode -d but faster
 # removes carriage returns to force unix newlines, converts + into space
 urldecode() {
-    local v="${1//+/ }" r= d
+    local v="${1//+/ }" d r=''
     while [ -n "$v" ]; do
         if [[ $v =~ ^([^%]*)%([0-9a-fA-F][0-9a-fA-F])(.*)$ ]]; then
             eval d="\$'\x${BASH_REMATCH[2]}'"
@@ -60,7 +60,7 @@ urlencode() {
     for (( i = 0; i < length; i++ )); do
         c="${1:i:1}"
         case $c in
-            [a-zA-Z0-9.~_-]) printf "$c" ;;
+            [a-zA-Z0-9.~_-]) echo -n "$c" ;;
             *) printf '%%%02X' "'$c" ;;
         esac
     done
@@ -110,7 +110,7 @@ if [ "${REQUEST_METHOD:-}" = POST ]; then
                             # a file was uploaded, even empty
 			    [ -n "$FORMFILES" ] || mkdir -p "$CGIBASHOPTS_DIR"
 			    FORMFILES="$FORMFILES${FORMFILES:+ }$var"
-			    declare -x FORMFILE_$var="$CGIBASHOPTS_DIR/${var}"
+			    declare -x "FORMFILE_$var=$CGIBASHOPTS_DIR/${var}"
 			    mv $CGIBASHOPTS_TMP "$CGIBASHOPTS_DIR/${var}"
 			else
 			    rm -f $CGIBASHOPTS_TMP
@@ -118,7 +118,7 @@ if [ "${REQUEST_METHOD:-}" = POST ]; then
 		    fi
 		fi
 		FORMS="$FORMS${FORMS:+ }$var"
-		declare -x FORM_$var="$val"
+		declare -x "FORM_$var=$val"
 	    fi
 	done
 	s="${QUERY_STRING:-}"
@@ -142,7 +142,7 @@ if [[ $s =~ = ]]; then # modern & (or ;) separated list of key=value
 	if [[ $var =~ ^[_[:alpha:]] ]]; then # ignore invalid vars
 	    [[ $val =~ [%+] ]] && val=$(urldecode "$val")
 	    FORMS="$FORMS${FORMS:+ }$var"
-	    declare -x FORM_$var="$val"
+	    declare -x "FORM_$var=$val"
 	fi
     done
 else # legacy indexed search
