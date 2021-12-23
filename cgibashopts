@@ -3,15 +3,30 @@
 # See https://github.com/ColasNahaboo/cgibashopts
 # Uses the CGI env variables REQUEST_METHOD CONTENT_TYPE QUERY_STRING
 
-export CGIBASHOPTS_RELEASE=4.0.1
+export CGIBASHOPTS_RELEASE=4.1.0
 export CGIBASHOPTS_VERSION="${CGIBASHOPTS_RELEASE%%.*}"
 cr=$'\r'
 nl=$'\n'
 export FORMS=
 export FORMFILES=
 export FORMQUERY=
-if [ x"$1" != x-n ]; then
-    export CGIBASHOPTS_DIR=/tmp/cgibashopts-files.$$
+
+# parse options
+uploads=true
+tmpfs=/tmp
+OPTIONS='nd:'
+OPTIND=1
+while getopts "${OPTIONS}" _o;do
+    case "$_o" in
+        n) uploads=false;;
+        d) tmpfs="$OPTARG";;
+        *) echo "unknown option: $_o"; exit 1;;
+    esac
+done
+shift $((OPTIND-1))
+
+if "$uploads"; then
+    export CGIBASHOPTS_DIR="$tmpfs/cgibashopts-files.$$"
     CGIBASHOPTS_TMP="$CGIBASHOPTS_DIR.tmp"
     cgibashopts_clean() { 
 	[ -n "$CGIBASHOPTS_DIR" ] && [ -d "$CGIBASHOPTS_DIR" ] && rm -rf "$CGIBASHOPTS_DIR"

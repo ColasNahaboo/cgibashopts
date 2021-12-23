@@ -38,6 +38,7 @@ E.g: `source /usr/local/bin/cgibashopts` or
     - if you do not expect to have files uploaded, you can use the -n option (see below)
 - **Command line options:**
   - **-n** can be given to ignore and discard any requests to upload files. This is recommended if you do not expect files to be uploaded, as it can save some computing load if some attacker try to upload fake files, but not mandatory. It also does not defines the variable `$CGIBASHOPTS_DIR` nor the function `cgibashopts_clean`, and do not use trap. **Note:** This is only available in versions 3 and above. Example of use : `. cgibashopts -n`
+  - **-d directory** specifies where cgibashoptions will manage its temporary files in case of file uploads. It defaults to `/tmp`. cgibashoptions will create in it a `cgibashopts-files.$$` subdirectory (where `$$` is the bash process number, unique per instance), shown in the `$CGIBASHOPTS_DIR` variable.
 - The variable `CGIBASHOPTS_RELEASE` holds the release version, uses [semantic versioning](https://semver.org/) (e.g. 4.0.1, 4.4.3) of the cgibashopts libray used, versions being listed at the end of this page in *History of changes*...
   - The variable `CGIBASHOPTS_VERSION` holds the major version number (the first integer of `CGIBASHOPTS_RELEASE`  above, for backwards compatibility.
 - Misc goodies:
@@ -64,7 +65,10 @@ Feel welcome to copy and enhance this project, as well as providing bug reports,
 - Or just email me: colas@nahaboo.net
 
 ## History of changes
-- 2020-04-20 non-code reorg: moved most files out of the main view, in tests/, tewiba upgraded to 1.5.0-pre.3
+- 2021-12-23 v4.1.0
+  - switched to semantic versioning, with new var `CGIBASHOPTS_RELEASE`
+  - new -d option to specify the temporary directory (suggestion of "Aufschlauer")
+  - move to GitHub: moved most files out of the main view, in tests/, tewiba upgraded to 1.5.0, code cleanup up to pass shellcheck
 - 2020-04-16 Version 4: urlencode goodie function added
 - 2020-04-04 Some cosmetic changes in this doc and the tests (test-suite dir renamed as tests), but no changes to cgibashopts code itself, so no version number increase.
 - 2020-03-27 Version 3: -n option added to disable file uploads
