@@ -17,6 +17,7 @@ E.g: `source /usr/local/bin/cgibashopts` or
 - Handles GET and POST requests, with all the methods of encoding the parameters:    application/x-www-form-urlencoded,     multipart/form-data,     text/plain.
 - Handles also the legacy index search query strings
 - Handles upload of binary files, and text files with unix or DOS newlines. I did not find any existing library providing this functionality for CGI shell programming
+- Uses only "classic" features of bash, and should work with old bash versions, I guess 4.1+
 
 ## Documentation
 - When used, the cgibashopts library decodes the parameters sent by the browser that the web server provides to the scripts as various environment variables and optionally its standard input, as per the [CGI](https://en.wikipedia.org/wiki/Common_Gateway_Interface) standard. Cgibashopts makes them available to the including script in an easy to use form: variables, functions, and files.
@@ -37,7 +38,8 @@ E.g: `source /usr/local/bin/cgibashopts` or
     - if you do not expect to have files uploaded, you can use the -n option (see below)
 - **Command line options:**
   - **-n** can be given to ignore and discard any requests to upload files. This is recommended if you do not expect files to be uploaded, as it can save some computing load if some attacker try to upload fake files, but not mandatory. It also does not defines the variable `$CGIBASHOPTS_DIR` nor the function `cgibashopts_clean`, and do not use trap. **Note:** This is only available in versions 3 and above. Example of use : `. cgibashopts -n`
-- The variable `CGIBASHOPTS_VERSION` holds the version number (an integer) of the cgibashopts libray used, versions being listed at the end of this page in *History of changes*..
+- The variable `CGIBASHOPTS_RELEASE` holds the release version, uses [semantic versioning](https://semver.org/) (e.g. 4.0.1, 4.4.3) of the cgibashopts libray used, versions being listed at the end of this page in *History of changes*...
+  - The variable `CGIBASHOPTS_VERSION` holds the major version number (the first integer of `CGIBASHOPTS_RELEASE`  above, for backwards compatibility.
 - Misc goodies:
   - Two handy bash functions are provided: 
     - `urldecode` that takes a string in parameter and outputs its decoded version, transforming `+` in spaces and `%XX` in the character of hexadecimal ascii code XX (e.g %41 becomes A), and removing carriage returns. 

@@ -3,7 +3,8 @@
 # See https://github.com/ColasNahaboo/cgibashopts
 # Uses the CGI env variables REQUEST_METHOD CONTENT_TYPE QUERY_STRING
 
-export CGIBASHOPTS_VERSION=4
+export CGIBASHOPTS_RELEASE=4.0.1
+export CGIBASHOPTS_VERSION="${CGIBASHOPTS_RELEASE%%.*}"
 cr=$'\r'
 nl=$'\n'
 export FORMS=
