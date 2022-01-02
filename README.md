@@ -15,7 +15,7 @@ Troubleshooting: if something goes wrong, run `tests/tewiba -v` in the cgibashop
 ## Features
 - Simple to use: just one file.
 - Fast and small.
-- Pure [bash](https://linux.die.net/man/1/bash) except for the use of [sed](https://linux.die.net/man/1/sed) and [truncate](https://linux.die.net/man/1/truncate).
+- Pure [bash](https://linux.die.net/man/1/bash) except for the use of [grep](https://linux.die.net/man/1/grep), [sed](https://linux.die.net/man/1/sed) and [truncate](https://linux.die.net/man/1/truncate).
 - Handles GET and POST requests, with all the methods of encoding the parameters:    application/x-www-form-urlencoded,     multipart/form-data,     text/plain.
 - Handles also the legacy index search query strings
 - Handles upload of binary files, and text files with unix or DOS newlines. I did not find any existing library providing this functionality for CGI shell programming
