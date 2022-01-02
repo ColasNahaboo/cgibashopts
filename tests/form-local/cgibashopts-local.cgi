@@ -18,24 +18,31 @@ main() {
     if [ -n "${FORM_file:-}" ]; then
 	src="/tmp/${FORM_file##*/}"
 	[ "$FORMFILES" = file ] || echo "<p>***Error, FORMFILES=$FORMFILES</p>"
-	if [ -e "$CGIBASHOPTS_DIR/file" ]; then
-	    if [ -s "$CGIBASHOPTS_DIR/file" ]; then
-		if [ -s "$src" ]; then
-		    if cmp -s "$src" "$CGIBASHOPTS_DIR/file"; then
-			echo "<p>Upload of $src successful</p>"
+        if [ -d "$CGIBASHOPTS_DIR" ]; then
+	    if [ -e "$CGIBASHOPTS_DIR/file" ]; then
+	        if [ -s "$CGIBASHOPTS_DIR/file" ]; then
+		    if [ -s "$src" ]; then
+		        if cmp -s "$src" "$CGIBASHOPTS_DIR/file"; then
+			    echo "<p>Upload of \"$src\" successful</p>"
+		        else
+			    echo "<p>***Error, file uploaded differ</p>"
+		        fi
 		    else
-			echo "<p>***Error, file uploaded differ</p>"
+		        echo "<p>***Error, src file \"$src\" empty</p>"
 		    fi
-		else
-		    echo "<p>***Error, src file empty</p>"
-		fi
+	        else
+		    echo "<p>***Error, file uploaded empty</p>"
+	        fi
 	    else
-		echo "<p>***Error, file uploaded empty</p>"
+	        echo "<p>***Error no uploaded file!</p>"
 	    fi
-	else
-	    echo "<p>***Error no uploaded file!</p>"
-	fi
+        else
+            echo "<p>***Error no directory \"CGIBASHOPTS_DIR\"</p>"
+        fi
     fi
+    echo "<b>Contents of \"CGIBASHOPTS_DIR\":</b><pre>"
+    (cd "$CGIBASHOPTS_DIR" && ls -l)
+    echo "</pre><hr>"
     form_page
 }
 
@@ -43,7 +50,8 @@ form_page() {
     echo "<form method=POST enctype='multipart/form-data'>
 <br>File: <input type=file name=file size=32>
 <br><input type=submit value=Upload> 
-</form>"    
+</form>
+<p><b>Note:</b> for comparing with the source, the uploaded files must also be found in the server /tmp/ directory, which may not be the real /tmp/ directory"    
     echo "$footer"
 }
 
