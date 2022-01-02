@@ -10,12 +10,13 @@ Cgibashopts is a small and fast pure BASH library to parse web forms parameters 
   `. /usr/local/bin/cgibashopts`
 - The value of a web form parameter `foo` (E.g. in the HTML page: `<input type=text name=foo>`) can then be found as the value of the shell environment variable `$FORM_foo`
 
-Troubleshooting: if something goes wrong, run `tests/tewiba -v` in the cgibashopts directory on your server to see if the test suite detects a problem. I have tested cgibashopts only on "mainstream" full GNU+Linux distribs (Debian, Ubuntu...), it may not work on some more specialized linux systems such as busybox.
+Troubleshooting: if something goes wrong, run `tests/tewiba -v` in the cgibashopts directory on your server to see if the test suite detects a problem. I have tested cgibashopts only on "mainstream" full GNU+Linux distribs (Debian, Ubuntu...), it may not work on some more specialized linux systems such as a barebones busybox (see below).
 
 ## Features
 - Simple to use: just one file.
 - Fast and small.
-- Pure [bash](https://linux.die.net/man/1/bash) except for the use of [grep](https://linux.die.net/man/1/grep), [sed](https://linux.die.net/man/1/sed) and [truncate](https://linux.die.net/man/1/truncate).
+- Pure [bash](https://linux.die.net/man/1/bash) except for the use of [grep](https://linux.die.net/man/1/grep), [sed](https://linux.die.net/man/1/sed) and [truncate](https://linux.die.net/man/1/truncate). 
+  On [busybox](https://busybox.net/) for instance, you need to install the packages for the GNU versions of `bash`,  `coreutils`, `grep`, `sed`
 - Handles GET and POST requests, with all the methods of encoding the parameters:    application/x-www-form-urlencoded,     multipart/form-data,     text/plain.
 - Handles also the legacy index search query strings
 - Handles upload of binary files, and text files with unix or DOS newlines. I did not find any existing library providing this functionality for CGI shell programming
