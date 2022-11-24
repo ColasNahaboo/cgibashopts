@@ -1,0 +1,44 @@
+#!/bin/bash
+# run via tewiba
+[ -n "$TEWIBA" ] || exec tewiba -v "$0"
+
+# Testing that file filed parsing does not run away over following fields
+
+in='-----------------------------234854398038784223431883737325
+Content-Disposition: form-data; name="file"; filename=""
+Content-Type: application/octet-stream
+
+
+-----------------------------234854398038784223431883737325
+Content-Disposition: form-data; name="foo"
+
+bar
+-----------------------------234854398038784223431883737325--
+'
+
+expected='Content-Disposition: form-data; name="foo"
+
+bar
+-----------------------------234854398038784223431883737325--
+'
+
+CGIBASHOPTS_TMP=$tmp.cgbo
+sep="-----------------------------234854398038784223431883737325"
+
+# This code is copied from cgibashopts script
+binparse(){
+    # binary-read stdin till next step. -u and q stops reading immediately
+    # When changed, update code copy in tests/filefield-runaway.test
+    sed -u -n -e "{:loop p; n;/^$sep/q; b loop}" >$CGIBASHOPTS_TMP
+    [ $CGIBASHOPTS_TMP != /dev/null ] && \
+	truncate -s -2 $CGIBASHOPTS_TMP # remove last \r\n
+}
+
+TEST "file field then text field"
+{
+    binparse
+    cat
+} <<<$in >$tmp.out
+echo "$expected" >$tmp.exp
+cmp -s $tmp.exp $tmp.out || TERR "rest of params gobbled: $(diff $tmp.exp $tmp.out)"
+TEND
