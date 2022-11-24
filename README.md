@@ -68,7 +68,9 @@ Feel welcome to copy and enhance this project, as well as providing bug reports,
 - Or just email me: colas@nahaboo.net
 
 ## History of changes
-- 2021-12-23 v4.1.0
+- 2022-11-24 v4.1.1: bug fix: form fields after a file upload field were ignored. Please upgrade!
+  Bug report by "pipoprods", issue #7.
+- 2021-12-23 v4.1.0:
   - switched to semantic versioning, with new var `CGIBASHOPTS_RELEASE`
   - new -d option to specify the temporary directory (suggestion of "Aufschlauer")
   - move to GitHub: moved most files out of the main view, in tests/, tewiba upgraded to 1.5.0, code cleanup up to pass shellcheck

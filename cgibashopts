@@ -3,7 +3,7 @@
 # See https://github.com/ColasNahaboo/cgibashopts
 # Uses the CGI env variables REQUEST_METHOD CONTENT_TYPE QUERY_STRING
 
-export CGIBASHOPTS_RELEASE=4.1.0
+export CGIBASHOPTS_RELEASE=4.1.1
 export CGIBASHOPTS_VERSION="${CGIBASHOPTS_RELEASE%%.*}"
 cr=$'\r'
 nl=$'\n'
@@ -102,8 +102,9 @@ if [ "${REQUEST_METHOD:-}" = POST ]; then
 		    read -r line
 		done
 		if [ "$type" = bin ]; then # binary file upload
-		    # binary-read stdin till next step
-		    sed -n -e "{:loop p; n;/^$sep/q; b loop}" >$CGIBASHOPTS_TMP
+		    # binary-read stdin till next step. -u and q stops reading immediately
+                    # When changed, update code copy in tests/filefield-runaway.test
+		    sed -u -n -e "{:loop p; n;/^$sep/q; b loop}" >$CGIBASHOPTS_TMP
 		    [ $CGIBASHOPTS_TMP != /dev/null ] && \
 			truncate -s -2 $CGIBASHOPTS_TMP # remove last \r\n
 		elif [ "$type" = txt ]; then # text file upload
