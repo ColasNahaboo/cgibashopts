@@ -60,6 +60,10 @@ Troubleshooting: if something goes wrong, run `tests/tewiba -v` in the cgibashop
 ## Test suite
 A test suite is provided, it can be run by `./tests/RUN-ALL-TESTS`, for more details see the README.md in directory `tests`
 
+## Projects using it
+- [watermark-pdf](https://github.com/pipoprods/watermark-pdf) a web frontend for a PDF watermarking script by [pipoprods](https://github.com/pipoprods)
+- [search in all of GitHub](https://github.com/search?q=cgibashopts&type=code) all GitHub projects referencing it
+
 ## Feedback
 Feel welcome to copy and enhance this project, as well as providing bug reports, feedback, suggestions via:
 - Creating [issues](https://gitreports.com/issue/ColasNahaboo/cgibashopts), if you have a GitHub account.
