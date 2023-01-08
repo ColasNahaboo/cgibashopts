@@ -3,7 +3,7 @@
 # See https://github.com/ColasNahaboo/cgibashopts
 # Uses the CGI env variables REQUEST_METHOD CONTENT_TYPE QUERY_STRING
 
-export CGIBASHOPTS_RELEASE=4.1.1
+export CGIBASHOPTS_RELEASE=4.1.2
 export CGIBASHOPTS_VERSION="${CGIBASHOPTS_RELEASE%%.*}"
 cr=$'\r'
 nl=$'\n'
@@ -83,11 +83,11 @@ urlencode() {
 }
 
 if [ "${REQUEST_METHOD:-}" = POST ]; then
-    if [[ ${CONTENT_TYPE:-} =~ ^multipart/form-data\;[[:space:]]*boundary=([^\;]+) ]]; then
+    if [[ ${CONTENT_TYPE:-} =~ ^multipart/form-data[\;,][[:space:]]*boundary=([^\;,]+) ]]; then
 	sep="--${BASH_REMATCH[1]}"
 	OIFS="$IFS"; IFS=$'\r'
 	while read -r line; do
-	    if [[ $line =~ ^Content-Disposition:\ *form-data\;\ *name=\"([^\"]+)\"(\;\ *filename=\"([^\"]+)\")? ]]; then
+	    if [[ $line =~ ^Content-Disposition:\ *form-data[\;,]\ *name=\"([^\"]+)\"(\;\ *filename=\"([^\"]+)\")? ]]; then
 		var="${BASH_REMATCH[1]}"
 		val="${BASH_REMATCH[3]}"
 		[[ $val =~ [%+] ]] && val=$(urldecode "$val")

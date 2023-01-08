@@ -72,6 +72,7 @@ Feel welcome to copy and enhance this project, as well as providing bug reports,
 - Or just email me: colas@nahaboo.net
 
 ## History of changes
+- 2023-01-08 v4.1.2: bug fix: only semico0lons were understood as separators in the `Content-Type` and `Content-Disposition` HTTP headers. Fixed to also use commas. Bug reported by "florin-ctu", issues #8 and #9.
 - 2022-11-24 v4.1.1: bug fix: form fields after a file upload field were ignored. Please upgrade!
   Bug report by "pipoprods", issue #7.
 - 2021-12-23 v4.1.0:
