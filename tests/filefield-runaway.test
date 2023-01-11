@@ -38,7 +38,7 @@ TEST "file field then text field"
 {
     binparse
     cat
-} <<<$in >$tmp.out
+} <<<"$in" >$tmp.out
 echo "$expected" >$tmp.exp
 cmp -s $tmp.exp $tmp.out || TERR "rest of params gobbled: $(diff $tmp.exp $tmp.out)"
 TEND

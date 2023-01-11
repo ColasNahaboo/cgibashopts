@@ -1,5 +1,5 @@
 #!/bin/bash
-export TEWIBA=1.5.0
+export TEWIBA=1.5.4
 USAGE="USAGE: tewiba [options] [tests...]
 Tewiba: TEst WIth BAsh: a simple test suite, in the spirit of shell scripting
 Version $TEWIBA - More info: https://github.com/ColasNahaboo/tewiba
@@ -51,6 +51,9 @@ if [ -n "$_TCLASS_RE_STRING" ]; then
 	_TCLASS_RE_STRING="${BASH_REMATCH[2]}"
     done
 fi
+
+# Ensure . is in the path for convenience
+[[ $PATH =~ (^|:)[.]: ]] || PATH=".:$PATH"
 
 ############################################ Tewiba API: usable funcs & vars
 # These can be used in your tests script files.
@@ -139,38 +142,51 @@ TECHO(){
 }
 
 # Usage: DOTEST [options] command-to-test its-options...
+# local vars prefixed with _DT_ to avoid conflicts when testing functions
 DOTEST(){
-    local opt label o to e te s ts f c result status r=0
-    OPTIND=1; while getopts 'o:O:e:E:s:S:l:f:c:' opt; do case "$opt" in
-	l) label="$OPTARG ";;
-        o) o="$OPTARG"; to=f;; O) o="$OPTARG"; to=r;;
-        e) e="$OPTARG"; te=f;; E) e="$OPTARG"; te=r;;
+    local _DT_opt _DT_label _DT_result _DT_status _DT_r=0 _DT_lset=0
+    local _DT_o _DT_to _DT_e _DT_te _DT_s _DT_ts _DT_f _DT_c _DT_vv _DT_vf
+    OPTIND=1; while getopts 'o:O:e:E:s:S:l:f:c:v:V:' _DT_opt; do case "$_DT_opt" in
+	l) _DT_label="$OPTARG"; _DT_lset=1;;
+        o) _DT_o="$OPTARG"; _DT_to=f;; O) _DT_o="$OPTARG"; _DT_to=r;;
+        e) _DT_e="$OPTARG"; _DT_te=f;; E) _DT_e="$OPTARG"; _DT_te=r;;
         s) [[ "$OPTARG" =~ ^-?[[:digit:]]+$ ]] && \
-	    s="status != $OPTARG" || s="status != 0" ; ts=r;;
-        S) s="$OPTARG"; ts=r;;
-	f) f="$OPTARG";; c) c="$OPTARG";;
+	       _DT_s="_DT_status != $OPTARG" || _DT_s="_DT_status != 0"
+           _DT_ts=r;;
+        S) _DT_s="$OPTARG"; _DT_ts=r;;
+	f) _DT_f="$OPTARG";; c) _DT_c="$OPTARG";;
+        v) _DT_vv="$OPTARG";; V) _DT_vf="$OPTARG";;
         *) :;;
     esac; done; shift $((OPTIND-1))
 
-    "$@" >$tmp.dotest.out 2>$tmp.dotest.err; status=$?
+    ((_DT_lset)) || _DT_label="$*"
+    "$@" >$tmp.dotest.out 2>$tmp.dotest.err; _DT_status=$?
 
-    [ -n "$to" ] && result=$(cat $tmp.dotest.out) && \
-	[[ ( $to = f && "$result" != "$o" ) ||
-               ( $to = e && ! $result =~ $o ) ]] && ((++r)) &&\
-	TERR "${label}stdout${nl}Expect: \"$o\"${nl}Got>>>: \"$result\""
-    [ -n "$te" ] && result=$(cat $tmp.dotest.err) && \
-	[[ ( $te = f && "$result" != "$e" ) ||
-               ( $te = e && ! $result =~ $e ) ]] && ((++r)) &&\
-	TERR "${label}stderr${nl}Expect: \"$e\"${nl}Got>>>: \"$result\""
-    [ -n "$ts" ] && (("$s")) && ((++r)) && \
-	TERR "${label}status expected: \"$s\", got $status"
-    [ -n "$f" ] && ! cmp -s $tmp.dotest.out "$f" && ((++r)) && \
-	if [ -n "$c" ]; then cp $tmp.dotest.out "$c"
-	 TERR "${label}output differ, compare expected to result:
-diff ${f@Q} ${F@Q}"
-	else TERR "${label}output differ"
+    [ -n "$_DT_to" ] && _DT_result=$(cat $tmp.dotest.out) && \
+	[[ ( $_DT_to = f && "$_DT_result" != "$_DT_o" ) ||
+               ( $_DT_to = e && ! $_DT_result =~ $_DT_o ) ]] && ((++_DT_r)) &&\
+	TERR "${_DT_label}${nl}Exp: \"$_DT_o\"${nl}Got: \"$_DT_result\""
+    [ -n "$_DT_te" ] && _DT_result=$(cat $tmp.dotest.err) && \
+	[[ ( $_DT_te = f && "$_DT_result" != "$_DT_e" ) ||
+               ( $_DT_te = e && ! $_DT_result =~ $_DT_e ) ]] && ((++_DT_r)) &&\
+	TERR "${_DT_label}${_DT_label:+, }(stderr)${nl}Exp: \"$_DT_e\"${nl}Got: \"$_DT_result\""
+    [ -n "$_DT_ts" ] && (("$_DT_s")) && ((++_DT_r)) && \
+	TERR "${_DT_label}${_DT_label:+, }(status)${nl}Exp: \"$_DT_s\", Got: $_DT_status"
+    [ -n "$_DT_f" ] && ! cmp -s $tmp.dotest.out "$_DT_f" && ((++_DT_r)) && \
+	if [ -n "$_DT_c" ]; then cp $tmp.dotest.out "$_DT_c"
+	 TERR "${_DT_label} output differ, compare expected to result:
+diff '${_DT_f}' '${_DT_F}'"
+	else TERR "${_DT_label} output differ"
         fi
-    return "$r"
+    [ -n "$_DT_vv" ] && {
+        eval "$_DT_vv" >/dev/null 2>&1 </dev/null ||
+            TERR "$_DT_vv failed (status $?)"
+    }
+    [ -n "$_DT_vf" ] && {
+        DOTEST_EVAL "$_DT_vf" "$@" >/dev/null 2>&1 </dev/null ||
+            TERR "DOTEST_EVAL $_DT_vf $*: failed (status $?)"
+    }
+    return "$_DT_r"
 }
 
 # in  __INIT__, declare regexes to ignore file names

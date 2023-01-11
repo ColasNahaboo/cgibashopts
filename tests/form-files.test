@@ -16,6 +16,15 @@
 # We "replay" all the saved CGI invocation data in form-files, so we do not 
 # need a web server, different browsers, and manual steps for the tests
 
+# Note: we exclude testing file5 in old bash versions < 4.4, as this is a
+# teratological case, for testing purposes only, that will not happen in real
+# operation and that bashes prior to 4.4 could not handle
+
+dofile5=5
+if [[ $BASH_VERSION =~ ^([[:digit:]]+)[.]([[:digit:]]+) ]]; then
+    ((${BASH_REMATCH[1]} * 100 + ${BASH_REMATCH[2]} < 404)) && dofile5=
+fi
+
 for path in form-files/*.data; do
     B="${path%.data}"; B="${B##*/}"
 
@@ -25,7 +34,7 @@ for path in form-files/*.data; do
     done
     . ../cgibashopts <form-files/"$B.data" # fakes a cgi call, creates 5 files
 	
-    for i in 1 2 3 4 5; do
+    for i in 1 2 3 4 $dofile5; do
 	# check if this file is expected to have DOS lines (CR-terminated)
         # dos2 is a variant for the weird file5 case with embedded CRs
 	if egrep -qs "(^| )${i}.2( |\$)" form-files/"$B.dos"; then os=dos2
@@ -34,7 +43,11 @@ for path in form-files/*.data; do
 	fi
 	if ! cmp -s $CGIBASHOPTS_DIR/file$i files-$os/file$i; then
 	    cp $CGIBASHOPTS_DIR/file$i /tmp/$B-file-$i
-	    TERR "file $file$i differ for browser $B. See difference from expected to result by: diff $PWD/files-$os/file$i /tmp/$B-file$i"
+	    TERR "file $file$i differ for browser $B.
+# Expected:
+$(hexdump -c $PWD/files-$os/file$i 2>/dev/null)
+# Got:
+$(hexdump -c /tmp/$B-file$i 2>/dev/null)"
 	fi
 	[ "$(param file$i)" = file$i ] || TERR filename of file$1 is: "\"$(param file$i)\""
     done
