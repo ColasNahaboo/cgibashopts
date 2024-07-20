@@ -13,7 +13,7 @@ Cgibashopts is a small and fast pure BASH library to parse web forms parameters 
 Troubleshooting:
 - if something goes wrong, run `tests/tewiba -v` in the cgibashopts directory on your server to see if the test suite detects a problem.
 - cgibashopts requires the GNU versions of `bash`, `grep`, `sed`. To test this, run `grep -P . /dev/null`, you should not get an error. If you do, you should install them on unix-like systems not using the GNU utilities by default, such as **MacOS**, busybox, FreeBSD, BSD and SYSV derivatives...
-  - On MacOS, see #10
+  - On MacOS, see [Issue #10](https://github.com/ColasNahaboo/cgibashopts/issues/10)
   - On [busybox](https://busybox.net/) you need to install the packages for the GNU versions of `bash`,  `coreutils`, `grep`, `sed`
   - On FreeBSD, use Freshports
 ## Features
