@@ -3,7 +3,7 @@
 # See https://github.com/ColasNahaboo/cgibashopts
 # Uses the CGI env variables REQUEST_METHOD CONTENT_TYPE QUERY_STRING
 
-export CGIBASHOPTS_RELEASE=4.1.3
+export CGIBASHOPTS_RELEASE=4.1.4
 export CGIBASHOPTS_VERSION="${CGIBASHOPTS_RELEASE%%.*}"
 cr=$'\r'
 nl=$'\n'
@@ -104,16 +104,16 @@ if [ "${REQUEST_METHOD:-}" = POST ]; then
 		if [ "$type" = bin ]; then # binary file upload
 		    # binary-read stdin till next step. -u and q stops reading immediately
                     # When changed, update code copy in tests/filefield-runaway.test
-		    sed -u -n -e "{:loop p; n;/^$sep/q; b loop}" >$CGIBASHOPTS_TMP
-		    [ $CGIBASHOPTS_TMP != /dev/null ] && \
-			truncate -s -2 $CGIBASHOPTS_TMP # remove last \r\n
+		    sed -u -n -e "{:loop p; n;/^$sep/q; b loop}" >"$CGIBASHOPTS_TMP"
+		    [ "$CGIBASHOPTS_TMP" != /dev/null ] && \
+			truncate -s -2 "$CGIBASHOPTS_TMP" # remove last \r\n
 		elif [ "$type" = txt ]; then # text file upload
 		    lp=
 		    while read -r line; do
 			[[ $line =~ ^"$sep" ]] && break
 			echo -n "$lp$line"
 			lp="$nl"
-		    done >$CGIBASHOPTS_TMP
+		    done >"$CGIBASHOPTS_TMP"
 		else # string, possibly multi-line
 		    val=
 		    while read -r line; do
@@ -122,15 +122,15 @@ if [ "${REQUEST_METHOD:-}" = POST ]; then
 		    done
 		fi
 		if [ -n "$type" ]; then
-		    if [ $CGIBASHOPTS_TMP != /dev/null ]; then
+		    if [ "$CGIBASHOPTS_TMP" != /dev/null ]; then
 			if [ -n "$val" ]; then
                             # a file was uploaded, even empty
 			    [ -n "$FORMFILES" ] || mkdir -p "$CGIBASHOPTS_DIR"
 			    FORMFILES="$FORMFILES${FORMFILES:+ }$var"
 			    declare -x "FORMFILE_$var=$CGIBASHOPTS_DIR/${var}"
-			    mv $CGIBASHOPTS_TMP "$CGIBASHOPTS_DIR/${var}"
+			    mv "$CGIBASHOPTS_TMP" "$CGIBASHOPTS_DIR/${var}"
 			else
-			    rm -f $CGIBASHOPTS_TMP
+			    rm -f "$CGIBASHOPTS_TMP"
 			fi
 		    fi
 		fi
