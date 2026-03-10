@@ -75,6 +75,8 @@ Feel welcome to copy and enhance this project, as well as providing bug reports,
 - Or just email me: colas@nahaboo.net
 
 ## History of changes
+- 2026-03-10 v4.1.5: micro-fix because the behavior of the GNU truncate command has changed: `truncate -s -2` now fails, it must be written `truncate -s-2`
+  **upgrade mandatory**
 - 2026-03-01 v4.1.4: fixes to silence shellcheck false positive warnings. No need to upgrade.
 - 2023-01-11 v4.1.3: fixes for the test suite only to avoid bugs in bash versions < 4.4. The cgibashopts actual code is unchanged, no need to upgrade unless for passing the test suite on legacy systems.
 - 2023-01-08 v4.1.2: bug fix: only semicolons were understood as separators in the `Content-Type` and `Content-Disposition` HTTP headers. Fixed to also use commas. Bug reported by "florin-ctu", issues #8 and #9.
