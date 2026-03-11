@@ -64,8 +64,10 @@ Troubleshooting:
 A test suite is provided, it can be run by `./tests/RUN-ALL-TESTS`, for more details see the README.md in directory `tests`
 
 ## Projects using it
-- [watermark-pdf](https://github.com/pipoprods/watermark-pdf) a web frontend for a PDF watermarking script by [pipoprods](https://github.com/pipoprods)
-- [search in all of GitHub](https://github.com/search?q=cgibashopts&type=code) all GitHub projects referencing it
+- [filewebx](https://github.com/ColasNahaboo/filewebx) a lightweight, self-hosted Bash CGI system for private file exchange.
+- [mailpixtracker](https://github.com/ColasNahaboo/mailpixtracker) a lightweight, privacy-focused Bash CGI script designed to track email opens via an invisible 1x1 pixel.
+- [watermark-pdf](https://github.com/pipoprods/watermark-pdf) a web frontend for a PDF watermarking script by [pipoprods](https://github.com/pipoprods).
+- [search in all of GitHub](https://github.com/search?q=cgibashopts&type=code) all GitHub projects referencing it.
 
 ## Feedback
 Feel welcome to copy and enhance this project, as well as providing bug reports, feedback, suggestions via:
